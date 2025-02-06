@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 const GamePieces = ({ score, setScore, onGameOver }) => {
   const canvasRef = useRef();
   const SNAKE_SPEED = 10;
-  const TILE_SIZE = SNAKE_SPEED; // Ensure the snake and apple match the grid size
+  const TILE_SIZE = SNAKE_SPEED;
   const [apple, setApple] = useState({ x: 180, y: 100 });
   const [snake, setSnake] = useState([
     { x: 100, y: 50 },
