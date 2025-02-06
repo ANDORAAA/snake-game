@@ -47,6 +47,17 @@ const GamePieces = ({ score, setScore, onGameOver }) => {
     }
   };
 
+  const getRandomPosition = () => {
+    return {
+      x:
+        Math.floor((Math.random() * (window.innerWidth * 0.8)) / TILE_SIZE) *
+        TILE_SIZE,
+      y:
+        Math.floor((Math.random() * (window.innerHeight * 0.8)) / TILE_SIZE) *
+        TILE_SIZE,
+    };
+  };
+
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
@@ -64,56 +75,79 @@ const GamePieces = ({ score, setScore, onGameOver }) => {
     };
 
     const moveSnake = () => {
-      if (direction) {
-        setSnake((prevSnake) => {
-          const newSnake = [...prevSnake];
-          const snakeHead = { x: newSnake[0].x, y: newSnake[0].y };
+      if (!direction) return;
 
-          for (let i = newSnake.length - 1; i > 0; i--) {
-            newSnake[i] = { ...newSnake[i - 1] };
-          }
+      setSnake((prevSnake) => {
+        const newSnake = [...prevSnake];
+        const snakeHead = { x: newSnake[0].x, y: newSnake[0].y };
 
-          switch (direction) {
-            case 'right':
-              snakeHead.x += TILE_SIZE;
-              break;
-            case 'left':
-              snakeHead.x -= TILE_SIZE;
-              break;
-            case 'up':
-              snakeHead.y -= TILE_SIZE;
-              break;
-            case 'down':
-              snakeHead.y += TILE_SIZE;
-              break;
-            default:
-              break;
-          }
+        for (let i = newSnake.length - 1; i > 0; i--) {
+          newSnake[i] = { ...newSnake[i - 1] };
+        }
 
-          newSnake[0] = snakeHead;
-          return newSnake;
-        });
-      }
+        switch (direction) {
+          case 'right':
+            snakeHead.x += TILE_SIZE;
+            break;
+          case 'left':
+            snakeHead.x -= TILE_SIZE;
+            break;
+          case 'up':
+            snakeHead.y -= TILE_SIZE;
+            break;
+          case 'down':
+            snakeHead.y += TILE_SIZE;
+            break;
+          default:
+            break;
+        }
+
+        // Check for wall collision
+        if (
+          snakeHead.x < 0 ||
+          snakeHead.x >= canvas.width ||
+          snakeHead.y < 0 ||
+          snakeHead.y >= canvas.height
+        ) {
+          onGameOver();
+          return [
+            { x: 100, y: 50 },
+            { x: 90, y: 50 },
+          ];
+        }
+
+        // Check for apple collision
+        if (snakeHead.x === apple.x && snakeHead.y === apple.y) {
+          setScore(score + 1);
+          newSnake.push({}); // Increase snake size
+          setApple(getRandomPosition());
+        }
+
+        newSnake[0] = snakeHead;
+        return newSnake;
+      });
     };
 
-    window.addEventListener('keydown', (e) => {
+    const handleKeyPress = (e) => {
       switch (e.key) {
         case 'ArrowRight':
-          setDirection('right');
+          if (direction !== 'left') setDirection('right');
           break;
         case 'ArrowLeft':
-          setDirection('left');
+          if (direction !== 'right') setDirection('left');
           break;
         case 'ArrowUp':
-          setDirection('up');
+          if (direction !== 'down') setDirection('up');
           break;
         case 'ArrowDown':
-          setDirection('down');
+          if (direction !== 'up') setDirection('down');
           break;
         default:
           break;
       }
-    });
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
 
     const interval = setInterval(() => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -123,14 +157,13 @@ const GamePieces = ({ score, setScore, onGameOver }) => {
       moveSnake();
     }, 100);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('keydown', handleKeyPress);
+    };
   }, [snake, direction]);
 
-  return (
-    <div>
-      <canvas className='game-canvas' ref={canvasRef} />
-    </div>
-  );
+  return <canvas className='game-canvas' ref={canvasRef} />;
 };
 
 export default GamePieces;
